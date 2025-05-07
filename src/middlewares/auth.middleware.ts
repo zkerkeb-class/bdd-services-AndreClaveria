@@ -1,7 +1,6 @@
-// middleware/auth.middleware.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-
+import config from "../config";
 // Étendre l'interface Request pour inclure l'utilisateur authentifié
 declare global {
   namespace Express {
@@ -12,18 +11,13 @@ declare global {
 }
 
 // Configuration
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // À stocker dans les variables d'environnement
-
+const JWT_SECRET = config.jwt.secret;
 export const authenticateJWT = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  // Récupérer le token depuis l'en-tête Authorization
   const authHeader = req.headers.authorization;
-
-  console.log("Auth Header:", authHeader); // Debugging line
-  console.log("JWT_SECRET:", JWT_SECRET); // Debugging line
 
   if (!authHeader) {
     return res
@@ -31,7 +25,6 @@ export const authenticateJWT = (
       .json({ message: "Accès non autorisé. Token manquant." });
   }
 
-  // Format attendu: "Bearer [token]"
   const token = authHeader.split(" ")[1];
 
   if (!token) {
@@ -39,11 +32,10 @@ export const authenticateJWT = (
   }
 
   try {
-    // Vérifier et décoder le token
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    req.user = decoded; // Ajouter les données utilisateur à la requête
-    console.log(req.user); // Debugging line
+    req.user = decoded;
+    console.log(req.user);
 
     next();
   } catch (error) {
@@ -51,7 +43,6 @@ export const authenticateJWT = (
   }
 };
 
-// Middleware pour vérifier les rôles (optionnel)
 export const authorizeRoles = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {

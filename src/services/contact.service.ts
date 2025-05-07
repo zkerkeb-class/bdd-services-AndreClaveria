@@ -1,72 +1,144 @@
-// services/contact.service.ts
 import Contact from "../models/contact.model";
-import { IContact } from "../types";
-import { Types } from "mongoose";
+import { IContact, IContactInput } from "../types";
 import { logger } from "../utils/logger";
 
 export const getAllContacts = async (): Promise<IContact[]> => {
-  return await Contact.find().populate("clientId", "name");
+  try {
+    return await Contact.find({ isActive: true }).sort({
+      lastName: 1,
+      firstName: 1
+    });
+  } catch (error) {
+    logger.error("Error fetching all contacts", error);
+    throw error;
+  }
 };
 
 export const getContactById = async (id: string): Promise<IContact | null> => {
-  if (!Types.ObjectId.isValid(id)) {
-    return null;
+  try {
+    return await Contact.findById(id);
+  } catch (error) {
+    logger.error(`Error fetching contact with id ${id}`, error);
+    throw error;
   }
-  return await Contact.findById(id).populate("clientId", "name");
 };
 
-export const getContactsByClientId = async (
-  clientId: string
-): Promise<IContact[]> => {
-  if (!Types.ObjectId.isValid(clientId)) {
-    return [];
-  }
-  return await Contact.find({ clientId }).sort({ primaryContact: -1 });
-};
-
+// src/services/contact.service.ts
+// Modifiez la signature de la fonction createContact
 export const createContact = async (
-  contactData: IContact
+  contactData: IContactInput
 ): Promise<IContact> => {
-  const contact = new Contact(contactData);
-  await contact.save();
-  return contact;
+  try {
+    const newContact = new Contact(contactData);
+    return await newContact.save();
+  } catch (error) {
+    logger.error("Error creating new contact", error);
+    throw error;
+  }
 };
 
 export const updateContact = async (
   id: string,
   contactData: Partial<IContact>
 ): Promise<IContact | null> => {
-  if (!Types.ObjectId.isValid(id)) {
-    return null;
+  try {
+    return await Contact.findByIdAndUpdate(id, contactData, { new: true });
+  } catch (error) {
+    logger.error(`Error updating contact with id ${id}`, error);
+    throw error;
   }
-
-  // Si ce contact est défini comme contact principal, désactiver les autres pour ce client
-  if (contactData.primaryContact) {
-    try {
-      const contact = await Contact.findById(id);
-      if (contact) {
-        await Contact.updateMany(
-          { clientId: contact.clientId, _id: { $ne: id } },
-          { primaryContact: false }
-        );
-      }
-    } catch (error) {
-      logger.error(
-        `Error updating primary contact status for contact ${id}`,
-        error
-      );
-    }
-  }
-
-  return await Contact.findByIdAndUpdate(id, contactData, {
-    new: true,
-    runValidators: true
-  });
 };
 
 export const deleteContact = async (id: string): Promise<IContact | null> => {
-  if (!Types.ObjectId.isValid(id)) {
-    return null;
+  try {
+    // Soft delete
+    return await Contact.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
+  } catch (error) {
+    logger.error(`Error deleting contact with id ${id}`, error);
+    throw error;
   }
-  return await Contact.findByIdAndDelete(id);
+};
+
+export const getContactsByCompany = async (
+  companyId: string
+): Promise<IContact[]> => {
+  try {
+    return await Contact.find({ company: companyId, isActive: true }).sort({
+      lastName: 1,
+      firstName: 1
+    });
+  } catch (error) {
+    logger.error(`Error fetching contacts for company ${companyId}`, error);
+    throw error;
+  }
+};
+
+export const getContactsByClient = async (
+  clientId: string
+): Promise<IContact[]> => {
+  try {
+    return await Contact.find({ client: clientId, isActive: true }).sort({
+      lastName: 1,
+      firstName: 1
+    });
+  } catch (error) {
+    logger.error(`Error fetching contacts for client ${clientId}`, error);
+    throw error;
+  }
+};
+
+export const getContactsByTeam = async (
+  teamId: string
+): Promise<IContact[]> => {
+  try {
+    return await Contact.find({ team: teamId, isActive: true }).sort({
+      lastName: 1,
+      firstName: 1
+    });
+  } catch (error) {
+    logger.error(`Error fetching contacts for team ${teamId}`, error);
+    throw error;
+  }
+};
+
+export const addOpportunityToContact = async (
+  contactId: string,
+  opportunityId: string
+): Promise<IContact | null> => {
+  try {
+    return await Contact.findByIdAndUpdate(
+      contactId,
+      { $addToSet: { opportunities: opportunityId } },
+      { new: true }
+    );
+  } catch (error) {
+    logger.error(
+      `Error adding opportunity ${opportunityId} to contact ${contactId}`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const removeOpportunityFromContact = async (
+  contactId: string,
+  opportunityId: string
+): Promise<IContact | null> => {
+  try {
+    return await Contact.findByIdAndUpdate(
+      contactId,
+      { $pull: { opportunities: opportunityId } },
+      { new: true }
+    );
+  } catch (error) {
+    logger.error(
+      `Error removing opportunity ${opportunityId} from contact ${contactId}`,
+      error
+    );
+    throw error;
+  }
 };

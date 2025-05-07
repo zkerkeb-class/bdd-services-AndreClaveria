@@ -1,9 +1,25 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-export const config = {
-  port: process.env.PORT || 3000,
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/bdd-services-AndreClaveria',
-  jwtSecret: process.env.JWT_SECRET || 'your-secret-key'
+const config = {
+  server: {
+    host: process.env.HOST || "localhost",
+    port: process.env.PORT || 3001,
+    env: process.env.NODE_ENV || "development",
+    frontend_url: process.env.FRONTEND_URL || "http://localhost:3000",
+    notification_url: process.env.NOTIFICATION_URL,
+    protocol: process.env.PROTOCOL || "http"
+  },
+  database: {
+    mongoUri: process.env.MONGO_URI || ""
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || "",
+    expiresIn: process.env.JWT_EXPIRES_IN || "6h"
+  },
+  logging: {
+    level: process.env.LOG_LEVEL || "info"
+  },
+  discord: {
+    service_name: process.env.SERVICE_NAME || "bdd"
+  }
 };
+
+export default config;

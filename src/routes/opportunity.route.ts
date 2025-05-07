@@ -1,4 +1,3 @@
-// routes/opportunity.routes.ts
 import { Router } from "express";
 import * as opportunityController from "../controllers/opportunity.controller";
 import {
@@ -8,43 +7,39 @@ import {
 
 const router = Router();
 
-// Routes protégées par JWT
-router.get("/", authenticateJWT, opportunityController.getAllOpportunities);
-router.get(
-  "/stats",
-  authenticateJWT,
-  opportunityController.getOpportunityStats
-);
-router.get(
-  "/stage/:stage",
-  authenticateJWT,
-  opportunityController.getOpportunitiesByStage
-);
-router.get(
-  "/client/:clientId",
-  authenticateJWT,
-  opportunityController.getOpportunitiesByClientId
-);
-router.get("/:id", authenticateJWT, opportunityController.getOpportunityById);
+// Toutes les routes protégées par l'authentification JWT
+router.use(authenticateJWT);
 
-// Routes avec vérification des rôles
+// Routes publiques pour tous les utilisateurs authentifiés
+router.get("/", opportunityController.getAllOpportunities);
+router.get("/:id", opportunityController.getOpportunityById);
+router.get(
+  "/company/:companyId",
+  opportunityController.getOpportunitiesByCompany
+);
+router.get("/client/:clientId", opportunityController.getOpportunitiesByClient);
+router.get("/status/:status", opportunityController.getOpportunitiesByStatus);
+
+// Routes protégées pour les rôles spécifiques
 router.post(
   "/",
-  authenticateJWT,
-  authorizeRoles("admin", "manager", "sales"),
+  authorizeRoles("manager", "user"),
   opportunityController.createOpportunity
 );
 router.put(
   "/:id",
-  authenticateJWT,
-  authorizeRoles("admin", "manager", "sales"),
+  authorizeRoles("manager", "user"),
   opportunityController.updateOpportunity
 );
 router.delete(
   "/:id",
-  authenticateJWT,
-  authorizeRoles("admin", "manager"),
+  authorizeRoles("manager"),
   opportunityController.deleteOpportunity
+);
+router.post(
+  "/:opportunityId/contacts/:contactId",
+  authorizeRoles("manager", "user"),
+  opportunityController.addContactToOpportunity
 );
 
 export default router;

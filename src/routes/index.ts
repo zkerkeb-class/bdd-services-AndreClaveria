@@ -14,4 +14,3 @@ router.use("/contacts", contactRoutes);
 router.use("/opportunities", opportunityRoutes);
 
 export default router;
-2;

@@ -7,8 +7,6 @@ import {
 
 const router = Router();
 
-// Routes publiques
-// Aucune
 
 // Routes protégées - Nécessitent une authentification
 // Récupérer toutes les équipes

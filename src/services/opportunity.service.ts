@@ -1,100 +1,162 @@
-// services/opportunity.service.ts
 import Opportunity from "../models/opportunity.model";
-import { IOpportunity } from "../types";
-import { Types } from "mongoose";
+import { IOpportunity, IOpportunityInput } from "../types";
 import { logger } from "../utils/logger";
 
 export const getAllOpportunities = async (): Promise<IOpportunity[]> => {
-  return await Opportunity.find()
-    .populate("clientId", "name")
-    .populate("contactIds", "firstName lastName");
+  try {
+    return await Opportunity.find({ isActive: true }).sort({
+      expectedClosingDate: 1
+    });
+  } catch (error) {
+    logger.error("Error fetching all opportunities", error);
+    throw error;
+  }
 };
 
 export const getOpportunityById = async (
   id: string
 ): Promise<IOpportunity | null> => {
-  if (!Types.ObjectId.isValid(id)) {
-    return null;
+  try {
+    return await Opportunity.findById(id);
+  } catch (error) {
+    logger.error(`Error fetching opportunity with id ${id}`, error);
+    throw error;
   }
-  return await Opportunity.findById(id)
-    .populate("clientId", "name")
-    .populate("contactIds", "firstName lastName");
 };
 
-export const getOpportunitiesByClientId = async (
-  clientId: string
-): Promise<IOpportunity[]> => {
-  if (!Types.ObjectId.isValid(clientId)) {
-    return [];
-  }
-  return await Opportunity.find({ clientId })
-    .populate("contactIds", "firstName lastName")
-    .sort({ expectedCloseDate: 1 });
-};
-
+// src/services/opportunity.service.ts
+// Modifiez la signature de la fonction createOpportunity
 export const createOpportunity = async (
-  opportunityData: IOpportunity
+  opportunityData: IOpportunityInput
 ): Promise<IOpportunity> => {
-  const opportunity = new Opportunity(opportunityData);
-  await opportunity.save();
-  return opportunity;
+  try {
+    const newOpportunity = new Opportunity(opportunityData);
+    return await newOpportunity.save();
+  } catch (error) {
+    logger.error("Error creating new opportunity", error);
+    throw error;
+  }
 };
 
 export const updateOpportunity = async (
   id: string,
   opportunityData: Partial<IOpportunity>
 ): Promise<IOpportunity | null> => {
-  if (!Types.ObjectId.isValid(id)) {
-    return null;
+  try {
+    return await Opportunity.findByIdAndUpdate(id, opportunityData, {
+      new: true
+    });
+  } catch (error) {
+    logger.error(`Error updating opportunity with id ${id}`, error);
+    throw error;
   }
-
-  return await Opportunity.findByIdAndUpdate(id, opportunityData, {
-    new: true,
-    runValidators: true
-  })
-    .populate("clientId", "name")
-    .populate("contactIds", "firstName lastName");
 };
 
 export const deleteOpportunity = async (
   id: string
 ): Promise<IOpportunity | null> => {
-  if (!Types.ObjectId.isValid(id)) {
-    return null;
+  try {
+    // Soft delete
+    return await Opportunity.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
+  } catch (error) {
+    logger.error(`Error deleting opportunity with id ${id}`, error);
+    throw error;
   }
-  return await Opportunity.findByIdAndDelete(id);
 };
 
-export const getOpportunitiesByStage = async (
-  stage: string
+export const getOpportunitiesByCompany = async (
+  companyId: string
 ): Promise<IOpportunity[]> => {
-  return await Opportunity.find({ stage })
-    .populate("clientId", "name")
-    .populate("contactIds", "firstName lastName")
-    .sort({ expectedCloseDate: 1 });
+  try {
+    return await Opportunity.find({ company: companyId, isActive: true }).sort({
+      expectedClosingDate: 1
+    });
+  } catch (error) {
+    logger.error(
+      `Error fetching opportunities for company ${companyId}`,
+      error
+    );
+    throw error;
+  }
 };
 
-export const getTotalOpportunityValue = async (): Promise<number> => {
-  const result = await Opportunity.aggregate([
-    { $match: { stage: { $ne: "perdue" } } },
-    { $group: { _id: null, totalValue: { $sum: "$value" } } }
-  ]);
-
-  return result.length > 0 ? result[0].totalValue : 0;
+export const getOpportunitiesByClient = async (
+  clientId: string
+): Promise<IOpportunity[]> => {
+  try {
+    return await Opportunity.find({ client: clientId, isActive: true }).sort({
+      expectedClosingDate: 1
+    });
+  } catch (error) {
+    logger.error(`Error fetching opportunities for client ${clientId}`, error);
+    throw error;
+  }
 };
 
-export const getWeightedOpportunityValue = async (): Promise<number> => {
-  const result = await Opportunity.aggregate([
-    { $match: { stage: { $ne: "perdue" } } },
-    {
-      $group: {
-        _id: null,
-        weightedValue: {
-          $sum: { $multiply: ["$value", { $divide: ["$probability", 100] }] }
-        }
-      }
-    }
-  ]);
+export const getOpportunitiesByTeam = async (
+  teamId: string
+): Promise<IOpportunity[]> => {
+  try {
+    return await Opportunity.find({ team: teamId, isActive: true }).sort({
+      expectedClosingDate: 1
+    });
+  } catch (error) {
+    logger.error(`Error fetching opportunities for team ${teamId}`, error);
+    throw error;
+  }
+};
 
-  return result.length > 0 ? result[0].weightedValue : 0;
+export const getOpportunitiesByStatus = async (
+  status: string
+): Promise<IOpportunity[]> => {
+  try {
+    return await Opportunity.find({ status, isActive: true }).sort({
+      expectedClosingDate: 1
+    });
+  } catch (error) {
+    logger.error(`Error fetching opportunities with status ${status}`, error);
+    throw error;
+  }
+};
+
+export const addContactToOpportunity = async (
+  opportunityId: string,
+  contactId: string
+): Promise<IOpportunity | null> => {
+  try {
+    return await Opportunity.findByIdAndUpdate(
+      opportunityId,
+      { $addToSet: { contacts: contactId } },
+      { new: true }
+    );
+  } catch (error) {
+    logger.error(
+      `Error adding contact ${contactId} to opportunity ${opportunityId}`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const removeContactFromOpportunity = async (
+  opportunityId: string,
+  contactId: string
+): Promise<IOpportunity | null> => {
+  try {
+    return await Opportunity.findByIdAndUpdate(
+      opportunityId,
+      { $pull: { contacts: contactId } },
+      { new: true }
+    );
+  } catch (error) {
+    logger.error(
+      `Error removing contact ${contactId} from opportunity ${opportunityId}`,
+      error
+    );
+    throw error;
+  }
 };

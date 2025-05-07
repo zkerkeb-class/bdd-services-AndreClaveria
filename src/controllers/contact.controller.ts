@@ -1,6 +1,6 @@
-// controllers/contact.controller.ts
 import { Request, Response } from "express";
 import * as contactService from "../services/contact.service";
+import * as clientService from "../services/client.service";
 import { logger } from "../utils/logger";
 
 export const getAllContacts = async (
@@ -9,12 +9,17 @@ export const getAllContacts = async (
 ): Promise<void> => {
   try {
     const contacts = await contactService.getAllContacts();
-    res.status(200).json(contacts);
+    res.status(200).json({
+      success: true,
+      count: contacts.length,
+      data: contacts
+    });
   } catch (error) {
     logger.error("Error in getAllContacts controller", error);
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la récupération des contacts" });
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
   }
 };
 
@@ -25,40 +30,25 @@ export const getContactById = async (
   try {
     const contact = await contactService.getContactById(req.params.id);
     if (!contact) {
-      res.status(404).json({ message: "Contact non trouvé" });
+      res.status(404).json({
+        success: false,
+        error: "Contact non trouvé"
+      });
       return;
     }
-    res.status(200).json(contact);
+    res.status(200).json({
+      success: true,
+      data: contact
+    });
   } catch (error) {
     logger.error(
       `Error in getContactById controller for id ${req.params.id}`,
       error
     );
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la récupération du contact" });
-  }
-};
-
-export const getContactsByClientId = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const contacts = await contactService.getContactsByClientId(
-      req.params.clientId
-    );
-    res.status(200).json(contacts);
-  } catch (error) {
-    logger.error(
-      `Error in getContactsByClientId controller for clientId ${req.params.clientId}`,
-      error
-    );
-    res
-      .status(500)
-      .json({
-        message: "Erreur lors de la récupération des contacts du client"
-      });
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
   }
 };
 
@@ -67,11 +57,26 @@ export const createContact = async (
   res: Response
 ): Promise<void> => {
   try {
-    const newContact = await contactService.createContact(req.body);
-    res.status(201).json(newContact);
+    const contact = await contactService.createContact(req.body);
+
+    // Ajouter le contact au client si un ID client est fourni
+    if (contact.client) {
+      await clientService.addContactToClient(
+        contact.client,
+        contact._id.toString()
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      data: contact
+    });
   } catch (error) {
     logger.error("Error in createContact controller", error);
-    res.status(500).json({ message: "Erreur lors de la création du contact" });
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
   }
 };
 
@@ -80,23 +85,27 @@ export const updateContact = async (
   res: Response
 ): Promise<void> => {
   try {
-    const updatedContact = await contactService.updateContact(
-      req.params.id,
-      req.body
-    );
-    if (!updatedContact) {
-      res.status(404).json({ message: "Contact non trouvé" });
+    const contact = await contactService.updateContact(req.params.id, req.body);
+    if (!contact) {
+      res.status(404).json({
+        success: false,
+        error: "Contact non trouvé"
+      });
       return;
     }
-    res.status(200).json(updatedContact);
+    res.status(200).json({
+      success: true,
+      data: contact
+    });
   } catch (error) {
     logger.error(
       `Error in updateContact controller for id ${req.params.id}`,
       error
     );
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la mise à jour du contact" });
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
   }
 };
 
@@ -105,19 +114,76 @@ export const deleteContact = async (
   res: Response
 ): Promise<void> => {
   try {
-    const deletedContact = await contactService.deleteContact(req.params.id);
-    if (!deletedContact) {
-      res.status(404).json({ message: "Contact non trouvé" });
+    const contact = await contactService.deleteContact(req.params.id);
+    if (!contact) {
+      res.status(404).json({
+        success: false,
+        error: "Contact non trouvé"
+      });
       return;
     }
-    res.status(200).json({ message: "Contact supprimé avec succès" });
+    res.status(200).json({
+      success: true,
+      data: contact
+    });
   } catch (error) {
     logger.error(
       `Error in deleteContact controller for id ${req.params.id}`,
       error
     );
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la suppression du contact" });
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
+  }
+};
+
+export const getContactsByCompany = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const contacts = await contactService.getContactsByCompany(
+      req.params.companyId
+    );
+    res.status(200).json({
+      success: true,
+      count: contacts.length,
+      data: contacts
+    });
+  } catch (error) {
+    logger.error(
+      `Error in getContactsByCompany controller for company ${req.params.companyId}`,
+      error
+    );
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
+  }
+};
+
+export const getContactsByClient = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const contacts = await contactService.getContactsByClient(
+      req.params.clientId
+    );
+    res.status(200).json({
+      success: true,
+      count: contacts.length,
+      data: contacts
+    });
+  } catch (error) {
+    logger.error(
+      `Error in getContactsByClient controller for client ${req.params.clientId}`,
+      error
+    );
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur"
+    });
   }
 };

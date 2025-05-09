@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as opportunityController from "../controllers/opportunity.controller";
+import * as contactController from "../controllers/contact.controller";
 import {
   authenticateJWT,
   authorizeRoles
@@ -8,65 +8,50 @@ import {
 const router = Router();
 
 // Routes protégées - Nécessitent une authentification
-// Récupérer toutes les opportunités
-router.get("/", authenticateJWT, opportunityController.getAllOpportunities);
+// Récupérer tous les contacts
+router.get("/", authenticateJWT, contactController.getAllContacts);
 
-// Récupérer une opportunité par ID
-router.get("/:id", authenticateJWT, opportunityController.getOpportunityById);
+// Récupérer un contact par ID
+router.get("/:id", authenticateJWT, contactController.getContactById);
 
-// Récupérer les opportunités par entreprise
+// Récupérer les contacts par entreprise
 router.get(
   "/company/:companyId",
   authenticateJWT,
-  opportunityController.getOpportunitiesByCompany
+  contactController.getContactsByCompany
 );
 
-// Récupérer les opportunités par client
+// Récupérer les contacts par client
 router.get(
   "/client/:clientId",
   authenticateJWT,
-  opportunityController.getOpportunitiesByClient
-);
-
-// Récupérer les opportunités par statut
-router.get(
-  "/status/:status",
-  authenticateJWT,
-  opportunityController.getOpportunitiesByStatus
+  contactController.getContactsByClient
 );
 
 // Routes protégées - Nécessitent des droits de manager ou user
-// Créer une nouvelle opportunité
+// Créer un nouveau contact
 router.post(
   "/",
   authenticateJWT,
   authorizeRoles("admin", "manager", "user"),
-  opportunityController.createOpportunity
+  contactController.createContact
 );
 
-// Mettre à jour une opportunité
+// Mettre à jour un contact
 router.put(
   "/:id",
   authenticateJWT,
   authorizeRoles("admin", "manager", "user"),
-  opportunityController.updateOpportunity
-);
-
-// Ajouter un contact à une opportunité
-router.post(
-  "/:opportunityId/contacts/:contactId",
-  authenticateJWT,
-  authorizeRoles("admin", "manager", "user"),
-  opportunityController.addContactToOpportunity
+  contactController.updateContact
 );
 
 // Routes protégées - Nécessitent des droits d'admin ou manager
-// Supprimer une opportunité
+// Supprimer un contact
 router.delete(
   "/:id",
   authenticateJWT,
   authorizeRoles("admin", "manager"),
-  opportunityController.deleteOpportunity
+  contactController.deleteContact
 );
 
 export default router;

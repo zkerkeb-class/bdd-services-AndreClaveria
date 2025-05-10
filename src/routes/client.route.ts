@@ -22,7 +22,7 @@ router.get(
 );
 
 // Récupérer les clients par équipe
-router.get("/team/:teamId", authenticateJWT, clientController.getClientsByTeam);
+router.get("/team/:teamId", clientController.getClientsByTeam);
 
 // Routes protégées - Nécessitent des droits de manager ou user
 // Créer un nouveau client

@@ -128,7 +128,7 @@ export interface IUser {
   firstName: string;
   lastName: string;
   email: string;
-  role: "manager" | "user";
+  role: "admin" | "manager" | "user";
   companyId?: string; // ID de l'entreprise
   teams?: string[]; // IDs des équipes
   isActive?: boolean;

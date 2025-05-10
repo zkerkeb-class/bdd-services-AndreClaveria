@@ -125,3 +125,12 @@ export const isUserTeamMember = async (
     throw error;
   }
 };
+
+export const getTeamsByMember = async (userId: string): Promise<ITeam[]> => {
+  try {
+    return await Team.find({ members: userId }).sort({ name: 1 });
+  } catch (error) {
+    logger.error(`Error fetching teams for member ${userId}`, error);
+    throw error;
+  }
+};

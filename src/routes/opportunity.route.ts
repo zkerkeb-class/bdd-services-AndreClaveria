@@ -23,22 +23,22 @@ router.get("/status/:status", opportunityController.getOpportunitiesByStatus);
 // Routes protégées pour les rôles spécifiques
 router.post(
   "/",
-  authorizeRoles("manager", "user"),
+  authorizeRoles("admin", "manager", "user"),
   opportunityController.createOpportunity
 );
 router.put(
   "/:id",
-  authorizeRoles("manager", "user"),
+  authorizeRoles("admin", "manager", "user"),
   opportunityController.updateOpportunity
 );
 router.delete(
   "/:id",
-  authorizeRoles("manager"),
+  authorizeRoles("admin", "manager", "user"),
   opportunityController.deleteOpportunity
 );
 router.post(
   "/:opportunityId/contacts/:contactId",
-  authorizeRoles("manager", "user"),
+  authorizeRoles("admin", "manager", "user"),
   opportunityController.addContactToOpportunity
 );
 

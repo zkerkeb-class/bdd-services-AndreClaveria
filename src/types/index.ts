@@ -1,4 +1,5 @@
 // Interface pour le modèle Client
+// Interface pour le modèle Client
 export interface IClient {
   _id: string; // Non optionnel pour une entité existante
   name: string;
@@ -20,10 +21,46 @@ export interface IClient {
   contacts?: string[]; // IDs des contacts - gérés par le service contact
   opportunities?: string[]; // IDs des opportunités - gérées par le service opportunité
   isActive?: boolean;
+
+  // 🔥 NOUVEAUX CHAMPS IA
+  // Données commerciales
+  estimatedBudget?: number; // Budget estimé en €
+  companySize?: "1-10" | "11-50" | "51-200" | "200+"; // Taille entreprise
+
+  // Pipeline de vente
+  stage?:
+        | "prospect"
+        | "contacted"
+        | "interested"
+        | "proposal"
+        | "negotiation"
+        | "closed_won"
+        | "closed_lost";
+      lastContactDate?: Date; // Dernier contact avec le client
+      urgency?: "low" | "medium" | "high"; // Urgence du besoin
+
+  // Résultats IA (calculés automatiquement)
+  aiScore?: number; // Score IA de 0 à 100
+  aiRecommendation?: string; // Recommandation d'action
+  aiLastAnalysis?: Date; // Date de la dernière analyse IA
+
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
-}
 
+  // Méthode pour récupérer les données IA
+  getAIData?(): {
+    name: string;
+    sector?: string;
+    description?: string;
+    estimatedBudget?: number;
+    companySize?: string;
+    stage?: string;
+    urgency?: string;
+    daysSinceLastContact: number;
+    currentScore?: number;
+  };
+}
 // Type pour la création d'un nouveau Client (sans _id)
 export type IClientInput = Omit<IClient, "_id"> & { _id?: string };
 

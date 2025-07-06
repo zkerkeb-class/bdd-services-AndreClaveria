@@ -12,7 +12,7 @@ const router = Router();
 router.get("/", authenticateJWT, clientController.getAllClients);
 
 // Récupérer un client par ID
-router.get("/:id", authenticateJWT, clientController.getClientById);
+router.get("/:id", clientController.getClientById);
 
 // Récupérer les clients par entreprise
 router.get(
